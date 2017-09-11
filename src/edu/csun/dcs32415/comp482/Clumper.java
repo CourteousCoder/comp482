@@ -26,7 +26,7 @@ public class Clumper {
      * @param data The array to print.
      */
     public static void print(int[] data) {
-        print(clump(data), average(data,defaultMaxClumps));
+        print(data, average(data,defaultMaxClumps));
     }
 
 
@@ -43,7 +43,7 @@ public class Clumper {
         for (int element : data) {
             builder = builder.append(element).append(',');
         }
-        builder = builder.deleteCharAt(builder.lastIndexOf(",")).append(']');
+        builder = builder.append(']');
         System.out.println(builder.toString());
     }
 
@@ -75,39 +75,32 @@ public class Clumper {
         }
 
         // The number of elements from data that go into a single clump.
-        final int clumpWeight;
-
-        // The weight of the left-most clump in the new array.
-        final int firstClumpWeight;
-
-        // Ensure that the number of clumps is exactly nClumps.
-        if (data.length % nClumps == 0) {
-            clumpWeight = data.length / nClumps;
-            firstClumpWeight = clumpWeight;
-        } else {
-            clumpWeight = 1 + data.length / nClumps;
-            firstClumpWeight = data.length % nClumps;
-        }
-
-        return d -> {
+        final int clumpWeight = data.length/nClumps;
+        return (int[] d) -> {
             int[] clumpedData = new int[nClumps];
 
-            //First we calculate the average of the first clump because it might be smaller.
-            int average = 0;
-            for (int j = 0; j < firstClumpWeight; j++) {
-                average += d[j];
-            }
-            clumpedData[0] = average / firstClumpWeight;
+            // Calculate the average of each clump except for the last one.
 
-            //Then we calculate the average of the remaining clumps.
-
-            for (int i = 1; i < clumpedData.length; i++) {
-                average = 0;
-                for (int j = 0; j < clumpWeight; j++) {
-                    average += d[ j + i*clumpWeight ];
+            //This points to the start of the next clump in d.
+            int nextClump = 0;
+            for (int i = 0; i < clumpedData.length - 1; i++) {
+                int sum = 0;
+                for(int j = nextClump; j < nextClump + clumpWeight; j++) {
+                    sum += d[j];
                 }
-                clumpedData[i] = average / clumpWeight;
+                clumpedData[i] = sum / clumpWeight;
+                nextClump += clumpWeight;
             }
+
+            //Clump all remaining elements (this could  be different than clumpWeight).
+            int sum = 0;
+            int count = 0;
+            while(nextClump + count < d.length) {
+                sum += d[nextClump + count];
+                count++;
+            }
+            clumpedData[clumpedData.length-1] = sum / count;
+
             return clumpedData;
         };
     }
