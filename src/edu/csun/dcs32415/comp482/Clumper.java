@@ -26,7 +26,7 @@ public class Clumper {
      * @param data The array to print.
      */
     public static void print(int[] data) {
-        print(data, clump(data));
+        print(clump(data), average(data,defaultMaxClumps));
     }
 
 
