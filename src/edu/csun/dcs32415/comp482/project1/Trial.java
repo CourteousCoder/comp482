@@ -1,6 +1,7 @@
 package edu.csun.dcs32415.comp482.project1;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Represents a row in either experiment's table.
@@ -34,8 +35,53 @@ public class Trial {
      */
     public void run(int n) {
         this.n = n;
-        this.count = 1;
-        //TODO: run trial.
+        this.count++;
+        String message;
+
+        // Create the arrays to sort.
+        int[] mergeSortMe = Helpers.createRandomData(n,1,1000000);
+        int[] quickSortMe = Arrays.copyOf(mergeSortMe, mergeSortMe.length);
+        System.out.println(String.format("Input (n=%d):",n));
+        Clumper.print(quickSortMe);
+
+        //Set up timers.
+        long start = 0;
+        long finish = 0;
+
+        // Time merge sort.
+        start = System.nanoTime();
+        mergeSortMe = Sorts.mergeSort(mergeSortMe);
+        finish = System.nanoTime();
+        this.mergeSortRuntime += finish - start;
+
+        //Verify it is sorted.
+        if(Sorts.isSorted(mergeSortMe)) {
+            mergeSortWins++;
+            message = "PASS";
+        }
+        else {
+            message = "FAIL";
+        }
+        System.out.println(String.format("Merge Sort (%s):",message));
+        Clumper.print(quickSortMe);
+
+        // Time quick sort.
+        start = System.nanoTime();
+        quickSortMe = Sorts.quickSort(quickSortMe);
+        finish = System.nanoTime();
+        this.quickSortRuntime += finish - start;
+
+        //Verify it is sorted.
+        if(Sorts.isSorted(quickSortMe)) {
+            quickSortWins++;
+            message = "PASS";
+        }
+        else {
+            message = "FAIL";
+        }
+        System.out.println(String.format("Quick Sort (%s):",message));
+        Clumper.print(quickSortMe);
+
     }
 
     /**
@@ -44,10 +90,8 @@ public class Trial {
      * @param count The number of times to run the experiment.
      */
     public void run(int n, int count) {
-        Trial currentTrial = new Trial();
         for (int i = 0; i < count; i++) {
-            currentTrial.run(n);
-            add(currentTrial);
+            run(n);
         }
     }
 
@@ -63,31 +107,6 @@ public class Trial {
         return String.format("%d,%f,%f,%f,%f\n",
                 n,meanMergeSortRuntime,mergeSortRatio,meanQuickSortRuntime,quickSortRatio);
 
-    }
-
-    private void add(Trial t) {
-        this.n += t.n;
-        this.count += t.count;
-        this.mergeSortWins += t.mergeSortWins;
-        this.quickSortWins += t.quickSortWins;
-        this.mergeSortRuntime += t.mergeSortRuntime;
-        this.quickSortRuntime += t.quickSortRuntime;
-    }
-
-
-    /**
-     * Creates an array of random values between min and max, inclusive
-     * @param size The size of the array.
-     * @param min The smallest possible value for the data.
-     * @param max The largest possible value fo rthe data.
-     * @return The new array.
-     */
-    private static int[] createRandomData(int size, int min, int max) {
-        int[] data = new int[size];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = Helpers.rand(min,max);
-        }
-        return data;
     }
 
 }
