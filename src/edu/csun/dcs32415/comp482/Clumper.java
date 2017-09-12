@@ -26,7 +26,7 @@ public class Clumper {
      * @param data The array to print.
      */
     public static void print(int[] data) {
-        print(data, average(data,defaultMaxClumps));
+        print(data, average(defaultMaxClumps));
     }
 
 
@@ -53,7 +53,7 @@ public class Clumper {
      * @return
      */
     public static int[] clump (int[] data) {
-        return clump(data,average(data, defaultMaxClumps));
+        return clump(data,average(defaultMaxClumps));
     }
 
 
@@ -67,16 +67,23 @@ public class Clumper {
         return aggregator.clump(data);
     }
 
-    public static Aggregator average(int[] data, int nClumps) {
-        //  For small arrays, it is already clumped.
-        if (data.length <= nClumps) {
-            // So do nothing to it.
-            return d -> d;
-        }
-
-        // The number of elements from data that go into a single clump.
-        final int clumpWeight = data.length/nClumps;
+    /**
+     * Describes a technique for clumping by averaging eaching clump.
+     * @param nClumps The final size of the array that this Aggregator returns.
+     * @return An Aggrigator that clumps data into the given number of clumps by averaging each clump.
+     */
+    public static Aggregator average(int nClumps) {
         return (int[] d) -> {
+            //  For small arrays, it is already clumped.
+            if (d.length <= nClumps) {
+                // So do nothing to it.
+                return d;
+            }
+
+            // The number of elements from data that go into a single clump.
+            final int clumpWeight = d.length/nClumps;
+
+
             int[] clumpedData = new int[nClumps];
 
             // Calculate the average of each clump except for the last one.
@@ -100,6 +107,41 @@ public class Clumper {
                 count++;
             }
             clumpedData[clumpedData.length-1] = sum / count;
+
+            return clumpedData;
+        };
+    }
+
+    /**
+     * Describes a technique for clumping by such that each element in the new array is the first element of each
+     * clump in the original data.
+     * @param nClumps The final size of the array that this Aggregator returns.
+     * @return An Aggrigator that clumps data into the given number of clumps by using the first element of each clump.
+     */
+    public static Aggregator first(int nClumps) {
+        return (int[] data) -> {
+            //  For small arrays, it is already clumped.
+            if (data.length <= nClumps) {
+                // So do nothing to it.
+                return data;
+            }
+
+            int[] clumpedData = new int[nClumps];
+
+            //A count of how many elements are in the first nClumps-1 clumps.
+            final int clumpSize = data.length/nClumps;
+
+            //Points to the start of the next clump in data.
+            int nextClump = 0;
+
+            //Copy the every nClumps-th element into the  new array, except the last because it may not divide evenly.
+            for (int i = 0;  i < clumpedData.length - 1; i++) {
+                clumpedData[i] = data[nextClump];
+                nextClump += clumpSize;
+            }
+
+            // Copy the first element of last clump.
+            clumpedData[clumpedData.length-1] = data[nextClump];
 
             return clumpedData;
         };
