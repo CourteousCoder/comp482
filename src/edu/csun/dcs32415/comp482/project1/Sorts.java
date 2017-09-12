@@ -3,7 +3,7 @@
  * @due Thursday, September 26, 2017 12:00 PM
  */
 
-package edu.csun.dcs32415.comp482;
+package edu.csun.dcs32415.comp482.project1;
 
 import java.util.Arrays;
 
@@ -135,7 +135,7 @@ public class Sorts {
      */
     public static int partition (int[] data, int start, int end)  {
         // Pick a random pivot.
-        int r = rand(start,end);
+        int r = Helpers.rand(start,end);
         int pivot = data[r];
 
         // Put the pivot at the end for safe keeping.
@@ -169,13 +169,6 @@ public class Sorts {
         return leftBoundary;
     }
 
-    /**
-     * Returns a random integer in the given inclusive range.
-     * @return
-     */
-    private static int rand(int min, int max) {
-        return min + (int)(Math.random() * (max-min));
-    }
 
     /**
      * Swaps two elements in an array at the given indices, without a temporary variable.

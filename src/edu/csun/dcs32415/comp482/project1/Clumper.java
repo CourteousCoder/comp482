@@ -1,4 +1,4 @@
-package edu.csun.dcs32415.comp482;
+package edu.csun.dcs32415.comp482.project1;
 
 /**
  * A class containing static functions for clumping (aggregating) the elements of large arrays for ease of analysis and printing.
