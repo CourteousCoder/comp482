@@ -63,7 +63,7 @@ public class Trial {
             message = "FAIL";
         }
         System.out.println(String.format("Merge Sort (%s):",message));
-        Clumper.print(quickSortMe);
+        Clumper.print(mergeSortMe);
 
         // Time quick sort.
         start = System.nanoTime();

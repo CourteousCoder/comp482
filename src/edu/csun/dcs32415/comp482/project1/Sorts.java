@@ -98,28 +98,16 @@ public class Sorts {
 
     /**
      * Modifies and sorts a subsequence of the data array using quicksort.
-     * This implementation uses O(log n) extra space for its recursive calls.
      * @param data The array to sort.
      * @param start The smaller index where the subsequence starts, inclusive.
      * @param end The larger index where the subsequence ends, inclusive.
-     * @return For conveniene, it also returns the array.
+     * @return For convenience, it also returns the array.
      */
     public static int[] quickSort (int[] data, int start, int end) {
-        // This loop is for tail recursion of the larger partition.
-        while (start < end) {
+        if (start < end) {
             int pivot = partition(data,start,end);
-            int leftSize = pivot - start;
-            int rightSize = end - pivot;
-
-            // Perform a recursive call on the smaller partition, and then prep the larger for the next loop iteration.
-            if (leftSize < rightSize) {
-                data = quickSort(data, start, pivot-1);
-                start = pivot + 1;
-            }
-            else {
-                data = quickSort(data, pivot+1, end);
-                end = pivot - 1;
-            }
+            data = quickSort(data,start,pivot-1);
+            data = quickSort(data,pivot+1, end);
         }
         return data;
     }
@@ -141,32 +129,28 @@ public class Sorts {
         // Put the pivot at the end for safe keeping.
         swap(data, r, end);
 
-        // This will point to the largest value to the left of the pivot.
-        int leftBoundary = start;
-        // This will point to the smallest value to the right of the pivot.
-        int rightBoundary = end - 1;
+        // This points to the most recently partitioned element such that all elements to the left of 'partition'
+        // are less than or equal to the pivot.
+        int partition = start;
+        // This points to the next element to consider.
+        int next = start;
 
-        // Do the partitioning until the boundaries cross.
-        while (leftBoundary <= rightBoundary) {
-            // Seek rightwards to the next out-of-place element smaller than the pivot, but stay in bounds.
-            while (data[leftBoundary] <= pivot && leftBoundary <= rightBoundary) {
-                leftBoundary++;
+        // Start partitioning elements until we reach the pivot at the end.
+        while (next < end) {
+            // Check if a small value is on the right side of our partition.
+            if(data[next] <= pivot) {
+                //Put it in the right place.
+                swap(data,next, partition);
+                // Move the partition.
+                partition++;
             }
-            // Seek leftwards to the next out-of-place element larger than the pivot, but stay in bounds.
-            while (data[leftBoundary] >= pivot && leftBoundary <= rightBoundary) {
-                leftBoundary++;
-            }
-            // If we are still in bounds,
-            if (leftBoundary < rightBoundary) {
-                // swap the two out-of-place elements.
-                swap(data,leftBoundary,rightBoundary);
-            }
+            next++;
         }
-        // restore the pivot from the end to its final place.
-        swap(data,leftBoundary,end);
 
-        //Return a pointer to the pivot.
-        return leftBoundary;
+        // The pivot value needs to be at the partition.
+        swap(data,end,partition);
+
+        return partition;
     }
 
 

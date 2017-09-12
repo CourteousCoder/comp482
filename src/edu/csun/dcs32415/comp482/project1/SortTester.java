@@ -8,7 +8,7 @@ public class SortTester {
     }
 
     public String getExperiment1() {
-        String header = "n,nTrials,# mergeSort Wins,# quicksortWins";
+        String header = "n,nTrials,# mergeSort Wins,# quicksortWins\n";
         StringBuilder builder = new StringBuilder(header);
 
         for (Trial trial : trials) {
@@ -19,7 +19,7 @@ public class SortTester {
     }
 
     public String getExperiment2() {
-        String header = "n,mergeSort:mean runtime (nanosecs),mergeSort: mean runtime / (n*log2(n)),quickSort: mean runtime (nanosecs),quickSort: mean runtime / (n*log2(n))";
+        String header = "n,mergeSort:mean runtime (nanosecs),mergeSort: mean runtime / (n*log2(n)),quickSort: mean runtime (nanosecs),quickSort: mean runtime / (n*log2(n))\n";
         StringBuilder builder = new StringBuilder(header);
 
         for (Trial trial : trials) {
@@ -35,6 +35,6 @@ public class SortTester {
             int n = 10 * (i+1);
             trials[i] = new Trial(n,20);
         }
-        trials[6] = new Trial(2000000, 20);
+        trials[6] = new Trial(2/*000000*/, 20);
     }
 }

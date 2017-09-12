@@ -26,7 +26,7 @@ public class Clumper {
      * @param data The array to print.
      */
     public static void print(int[] data) {
-        print(data, average(defaultMaxClumps));
+        print(data, first(defaultMaxClumps));
     }
 
 
@@ -53,7 +53,7 @@ public class Clumper {
      * @return
      */
     public static int[] clump (int[] data) {
-        return clump(data,average(defaultMaxClumps));
+        return clump(data,first(defaultMaxClumps));
     }
 
 
