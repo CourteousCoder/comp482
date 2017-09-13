@@ -49,7 +49,7 @@ public class Trial {
 
         // Time merge sort.
         start = System.nanoTime();
-        mergeSortMe = Sorts.mergeSort(mergeSortMe);
+        Sorts.mergeSort(mergeSortMe);
         finish = System.nanoTime();
         ms = finish - start;
 
@@ -65,7 +65,7 @@ public class Trial {
 
         // Time quick sort.
         start = System.nanoTime();
-        quickSortMe = Sorts.quickSort(quickSortMe);
+        Sorts.quickSort(quickSortMe);
         finish = System.nanoTime();
         qs = finish - start;
 

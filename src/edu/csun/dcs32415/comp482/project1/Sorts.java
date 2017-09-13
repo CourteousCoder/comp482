@@ -28,8 +28,8 @@ public class Sorts {
      * Sorts the array using  merge sort
      * @param data The array to sort
      */
-    public static int[] mergeSort(int[] data) {
-        return mergeSort(data,0,data.length-1);
+    public static void mergeSort(int[] data) {
+        mergeSort(data,0,data.length-1);
     }
 
 
@@ -39,21 +39,19 @@ public class Sorts {
      * @param data The array to sort
      * @param start The index of the first element of the segment we want to sort.
      * @param end The index of the last element of the segment we want to sort.
-     * @return The same array, but with the given segment sorted.
      */
-    public static int[] mergeSort(int[] data, int start, int end) {
+    public static void mergeSort(int[] data, int start, int end) {
         if (start < end) {
             // Cut the data in two halves.
             int middle = (end+start) / 2;
 
             //Sort each half separately.
-            data = mergeSort(data, start, middle);
-            data = mergeSort(data, middle + 1, end);
+            mergeSort(data, start, middle);
+            mergeSort(data, middle + 1, end);
 
             // Merge back into 1 array.
             merge(data, start, middle, end);
         }
-        return data;
     }
 
     /**
@@ -62,7 +60,6 @@ public class Sorts {
      * @param start The index of the first element of the left-hand-side segment.
      * @param middle The index of the last element of the left-hand-side segment.
      * @param end The index of the last element of the right-hand-side segment.
-     * @return the merged array.
      */
     private static void merge(int[] data, int start, int middle, int end) {
         // Make a copy of the segment into a buffer.
@@ -95,13 +92,10 @@ public class Sorts {
 
     /**
      * Sorts the data array using quicksort. This modifies the original array.
-     *
      * @param data The array to sort.
-     * @return For convenience, it also returns the array.
      */
-    public static int[] quickSort(int[] data) {
-
-        return quickSort(data, 0, data.length - 1);
+    public static void quickSort(int[] data) {
+        quickSort(data, 0, data.length - 1);
     }
 
     /**
@@ -110,15 +104,13 @@ public class Sorts {
      * @param data  The array to sort.
      * @param start The smaller index where the subsequence starts, inclusive.
      * @param end   The larger index where the subsequence ends, inclusive.
-     * @return For convenience, it also returns the array.
      */
-    public static int[] quickSort(int[] data, int start, int end) {
+    public static void quickSort(int[] data, int start, int end) {
         if (start < end) {
             int pivot = partition(data, start, end);
-            data = quickSort(data, start, pivot - 1);
-            data = quickSort(data, pivot + 1, end);
+            quickSort(data, start, pivot - 1);
+            quickSort(data, pivot + 1, end);
         }
-        return data;
     }
 
     /**
