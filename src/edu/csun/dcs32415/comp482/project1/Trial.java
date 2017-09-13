@@ -45,18 +45,16 @@ public class Trial {
         Clumper.print(quickSortMe);
 
         //Set up timers.
-        long start = 0;
-        long finish = 0;
+        long start, finish, ms, qs;
 
         // Time merge sort.
         start = System.nanoTime();
         mergeSortMe = Sorts.mergeSort(mergeSortMe);
         finish = System.nanoTime();
-        this.mergeSortRuntime += finish - start;
+        ms = finish - start;
 
         //Verify it is sorted.
         if(Sorts.isSorted(mergeSortMe)) {
-            mergeSortWins++;
             message = "PASS";
         }
         else {
@@ -69,16 +67,28 @@ public class Trial {
         start = System.nanoTime();
         quickSortMe = Sorts.quickSort(quickSortMe);
         finish = System.nanoTime();
-        this.quickSortRuntime += finish - start;
+        qs = finish - start;
 
         //Verify it is sorted.
         if(Sorts.isSorted(quickSortMe)) {
-            quickSortWins++;
             message = "PASS";
         }
         else {
             message = "FAIL";
         }
+
+        //Update our class variables.
+        this.mergeSortRuntime += ms;
+        this.quickSortRuntime += qs;
+
+        //Which algorithm won? A tie means they both win.
+        if (ms <= qs) {
+            this.mergeSortWins++;
+        }
+        if (qs <= ms) {
+            this.quickSortWins++;
+        }
+
         System.out.println(String.format("Quick Sort (%s):",message));
         Clumper.print(quickSortMe);
 
