@@ -1,15 +1,14 @@
 /**
  * @author Daniel Schetritt
- * @due Thursday, September 26, 2017 12:00 PM
+ * @date Tuesday, September 26, 2017 12:00 PM
  */
 
 package edu.csun.dcs32415.comp482.project1;
 
-import java.util.Arrays;
-
 public class Sorts {
     /**
      * Returns true iff the array is sorted.
+     *
      * @param data
      * @return
      */
@@ -18,7 +17,7 @@ public class Sorts {
             return true;
         }
         for (int i = 1; i < data.length; i++) {
-            if (data[i-1] > data[i]) {
+            if (data[i - 1] > data[i]) {
                 return false;
             }
         }
@@ -26,88 +25,98 @@ public class Sorts {
     }
 
     /**
-     * Implementation of Merge sort that preserves the original array, just like the book.
+     * Sorts the array using  merge sort
      * @param data The array to sort
-     * @return A sorted copy of the array
      */
     public static int[] mergeSort(int[] data) {
-        if (data.length < 2)
-        {
-            // Already sorted.
-            return data;
+        return mergeSort(data,0,data.length-1);
+    }
+
+
+    /**
+     * Modifies and sorts a segment of an using merge sort.
+     *
+     * @param data The array to sort
+     * @param start The index of the first element of the segment we want to sort.
+     * @param end The index of the last element of the segment we want to sort.
+     * @return The same array, but with the given segment sorted.
+     */
+    public static int[] mergeSort(int[] data, int start, int end) {
+        if (start < end) {
+            // Cut the data in two halves.
+            int middle = (end+start) / 2;
+
+            //Sort each half separately.
+            data = mergeSort(data, start, middle);
+            data = mergeSort(data, middle + 1, end);
+
+            // Merge back into 1 array.
+            merge(data, start, middle, end);
         }
-        // Cut the data in two halves.
-        int middle = data.length/2;
-        int[] left = Arrays.copyOfRange(data, 0, middle);
-        int[] right = Arrays.copyOfRange(data, middle, data.length);
-
-        //Sort each half separately.
-        left = mergeSort(left);
-        right = mergeSort(right);
-
-        // Merge back into 1 array.
-        return merge(left,right);
+        return data;
     }
 
     /**
-     * Merges two sorted arrays such that they stay sorted, without modifying the original arrays; just like the book.
-     * @param left
-     * @param right
+     * Merges two consecutive sorted segments of the array into one sorted segment.
+     *
+     * @param start The index of the first element of the left-hand-side segment.
+     * @param middle The index of the last element of the left-hand-side segment.
+     * @param end The index of the last element of the right-hand-side segment.
      * @return the merged array.
      */
-    private static int[] merge(int[] left, int[] right) {
-        int[] merged = new int[left.length + right.length];
-        int nextLeftIndex = 0;
-        int nextRightIndex = 0;
-        int i = 0;
+    private static void merge(int[] data, int start, int middle, int end) {
+        // Make a copy of the segment into a buffer.
+        int[] buffer = new int[data.length];
+        for (int i = start; i <= end; i++) {
+            buffer[i] = data[i];
+        }
 
-        //Start merging.
+        // Copy the lesser value on each iteration back to the original array.
+        int nextDataIndex = start;
+        int nextLeftIndex = start;
+        int nextRightIndex = middle + 1;
 
-        while (nextLeftIndex < left.length && nextRightIndex < right.length) {
-            if (left[nextLeftIndex] < right[nextRightIndex]) {
-                merged[i] = left[nextLeftIndex++];
+        while (nextLeftIndex <= middle && nextRightIndex <= end) {
+            if (buffer[nextLeftIndex] <= buffer[nextRightIndex]) {
+                data[nextDataIndex] = buffer[nextLeftIndex++];
+            } else {
+                data[nextDataIndex] = buffer[nextRightIndex++];
             }
-            else {
-                merged[i] = right[nextRightIndex++];
-            }
-            i++;
+            nextDataIndex++;
         }
 
-        // Copy remaining elements from the larger array.
-
-        while (nextLeftIndex < left.length) {
-            merged[i++] = left[nextLeftIndex++];
+        // Copy leftover elements back into the array
+        while (nextLeftIndex <= middle) {
+            data[nextDataIndex++] = buffer[nextLeftIndex++];
         }
-        while (nextRightIndex < right.length) {
-            merged[i++] = right[nextRightIndex++];
-        }
-
-        return merged;
     }
+
 
 
     /**
      * Sorts the data array using quicksort. This modifies the original array.
+     *
      * @param data The array to sort.
      * @return For convenience, it also returns the array.
      */
     public static int[] quickSort(int[] data) {
 
-        return quickSort(data,0,data.length - 1);
+        return quickSort(data, 0, data.length - 1);
     }
 
     /**
      * Modifies and sorts a subsequence of the data array using quicksort.
-     * @param data The array to sort.
+     *
+     * @param data  The array to sort.
      * @param start The smaller index where the subsequence starts, inclusive.
-     * @param end The larger index where the subsequence ends, inclusive.
+     * @param end   The larger index where the subsequence ends, inclusive.
      * @return For convenience, it also returns the array.
      */
-    public static int[] quickSort (int[] data, int start, int end) {
+    public static int[] quickSort(int[] data, int start, int end) {
         if (start < end) {
-            int pivot = partition(data,start,end);
-            data = quickSort(data,start,pivot-1);
-            data = quickSort(data,pivot+1, end);
+            int pivot = partition(data, start, end);
+            data = quickSort(data, start, pivot - 1);
+            data = quickSort(data, pivot + 1, end);
         }
         return data;
     }
@@ -116,18 +125,19 @@ public class Sorts {
      * Modifies a subsequence of the data array such that every element in the subsequence that is less than
      * a random pivot is to the left of it, and every element in the subsequence that is larger than the pivot
      * is to the right of it.
-     * @param data The data array
+     *
+     * @param data  The data array
      * @param start the smaller index where the subsequence starts, inclusive
-     * @param end the larger index where the subsequence ends, inclusive
+     * @param end   the larger index where the subsequence ends, inclusive
      * @return the new position of the pivot.
      */
-    public static int partition (int[] data, int start, int end)  {
+    public static int partition(int[] data, int start, int end) {
         // Pick a random pivot.
-        int r = Helpers.rand(start,end);
+        int r = Helpers.rand(start, end);
         int pivot = data[r];
 
         // Put the pivot at the end for safe keeping.
-        swap(data, r, end);
+        Helpers.swap(data, r, end);
 
         // This points to the most recently partitioned element such that all elements to the left of 'partition'
         // are less than or equal to the pivot.
@@ -138,9 +148,9 @@ public class Sorts {
         // Start partitioning elements until we reach the pivot at the end.
         while (next < end) {
             // Check if a small value is on the right side of our partition.
-            if(data[next] <= pivot) {
+            if (data[next] <= pivot) {
                 //Put it in the right place.
-                swap(data,next, partition);
+                Helpers.swap(data, next, partition);
                 // Move the partition.
                 partition++;
             }
@@ -148,19 +158,58 @@ public class Sorts {
         }
 
         // The pivot value needs to be at the partition.
-        swap(data,end,partition);
+        Helpers.swap(data, end, partition);
 
         return partition;
     }
 
+}
+
+class Helpers {
+    /**
+     * Returns a random integer in the given inclusive range.
+     *
+     * @return
+     */
+    public static int rand(int min, int max) {
+        return min + (int) (Math.random() * (max - min));
+    }
+
+    /**
+     * Computes n * log(n) with logarithmic base = 2.
+     *
+     * @param n Any positive integer.
+     * @return n * log (n)
+     */
+    public static double nLogN(int n) {
+        return n * Math.log(n) / Math.log(2);
+    }
+
+
+    /**
+     * Creates an array of random values between min and max, inclusive
+     *
+     * @param size The size of the array.
+     * @param min  The smallest possible value for the data.
+     * @param max  The largest possible value fo rthe data.
+     * @return The new array.
+     */
+    public static int[] createRandomData(int size, int min, int max) {
+        int[] data = new int[size];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = Helpers.rand(min, max);
+        }
+        return data;
+    }
 
     /**
      * Swaps two elements in an array at the given indices, without a temporary variable.
+     *
      * @param a The array
      * @param i The index of the first element to swap.
      * @param j The index of the second element to swap.
      */
-    private static void swap(int[] a, int i, int j) {
+    public static void swap(int[] a, int i, int j) {
         if (i != j) {
             a[i] ^= a[j];
             a[j] ^= a[i];

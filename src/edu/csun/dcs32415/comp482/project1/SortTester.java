@@ -35,6 +35,6 @@ public class SortTester {
             int n = 10 * (i+1);
             trials[i] = new Trial(n,20);
         }
-        trials[6] = new Trial(2/*000000*/, 20);
+        trials[6] = new Trial(200000, 20);
     }
 }
