@@ -5,13 +5,12 @@ import java.util.*;
 public class Knapsack {
     private int capacity;
     private int size;
-    private Item[] items;
+    private List<Item> items;
 
     public Knapsack() {
-        size = 0;
+        size = -1;
         capacity = 0;
-        items = new Item[1];
-        items[0] = new Item(0,-1,-1);
+        items = new ArrayList<Item>();
     }
 
     /**
@@ -38,36 +37,42 @@ public class Knapsack {
         return result;
     }
 
+    public void BruteForceSolution(int size, int[] weights, int[] benefits, int capacity) {
+        setItems(size, weights, benefits, capacity);
+    }
+
     public void GreedyApproximateSolution(int size, int[] weights, int[] benefits, int capacity) {
         setItems(size, weights, benefits, capacity);
+        sortByRatio();
         int i = 0;
         int sum = 0;
         boolean isFull = false;
-        while (i < items.length && !isFull){
-            if(sum + items[i].weight <= capacity) {
-                items[i].use();
-                sum += items[i].weight;
+        while (i < items.size() && !isFull){
+            if(sum + items.get(i).weight <= capacity) {
+                items.get(i).use();
+                sum += items.get(i).weight;
             } else {
                 isFull = true;
             }
             i++;
         }
+        restoreOriginalOrder();
         System.out.println(this);
         printSet();
     }
 
     private int[] getWeights() {
-        int[] weights = new int[items.length];
-        for (int i = 0; i < items.length; i++) {
-            weights[i] = items[i].weight;
+        int[] weights = new int[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            weights[i] = items.get(i).weight;
         }
         return weights;
     }
 
     private int[] getBenefits() {
-        int[] benefits = new int[items.length];
-        for (int i = 0; i < items.length; i++) {
-            benefits[i] = items[i].benefit;
+        int[] benefits = new int[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            benefits[i] = items.get(i).benefit;
         }
         return benefits;
     }
@@ -78,17 +83,15 @@ public class Knapsack {
      */
     private int[] getContents() {
         int[] contents;
-        //Figure otu which items should go into the list.
-        List<Integer> usedItemNames = new LinkedList<Integer>();
+        // Make a collection of items that currently in the knapsack ordered by name.
+        SortedSet<Integer> usedItemNames = new TreeSet<Integer>(Comparator.comparing(integer -> integer.intValue()));
         for (Item i : items) {
             if (i.isUsed()) {
                 usedItemNames.add(Integer.valueOf(i.name));
             }
         }
-        //Sort the names.
-        usedItemNames.sort(Comparator.comparing(integer -> integer.intValue()));
 
-        // Copy them into an array.
+        // Convert them into an array primitive ints.
         contents = new int[usedItemNames.size()];
         int i = 0;
         for (Integer name : usedItemNames) {
@@ -121,10 +124,9 @@ public class Knapsack {
     private void setItems(int size, int[] weights, int[] benefits, int capacity) {
         this.capacity = capacity;
         this.size = size;
-        this.items = new Item[size + 1];
-        this.items[0] = new Item(0,-1,-1);
-        for (int i = 0; i < this.size; i++) {
-            this.items[i+1] = new Item(i,weights[i], benefits[i]);
+        this.items.clear();
+        for (int i = 0; i < weights.length; i++) {
+            this.items.add(new Item(i, weights[i], benefits[i]));
         }
     }
 
@@ -166,23 +168,23 @@ public class Knapsack {
         int[] weights = getWeights();
         int[] benefits = getBenefits();
         StringBuilder builder = new StringBuilder("Knapsack Problem Instance");
-        builder = builder.append("\nNumber of items = ").append(items.length);
-        builder = builder.append("  Knapsack Capacity = ").append(capacity);
+        builder = builder.append("\nNumber of items = ").append(this.size);
+        builder = builder.append("  Knapsack Capacity = ").append(this.capacity);
         builder = builder.append("\nInput weights:  ").append(beautifyArray(weights));
         builder = builder.append("\nInput benefits: ").append(beautifyArray(benefits));
         return builder.toString();
     }
 
     private void restoreOriginalOrder() {
-        Arrays.sort(items,Comparator.comparing( i -> i.name));
+        items.sort(Comparator.comparing( i -> i.name));
     }
 
     private void sortByRatio() {
 
-        Arrays.sort(items, Comparator.comparing( i -> i.ratio));
+        items.sort(Comparator.comparing( i -> i.ratio));
 
         // Descending order.
-        Collections.reverse(Arrays.asList(items));
+        Collections.reverse(items);
     }
 
     private void reset() {
@@ -219,6 +221,11 @@ public class Knapsack {
 
         public void clearUsed() {
             isUsed = false;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(#%d,w%d,b%d)",name,weight,benefit);
         }
     }
 }

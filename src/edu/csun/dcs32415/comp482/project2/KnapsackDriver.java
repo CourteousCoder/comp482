@@ -4,9 +4,9 @@ public class KnapsackDriver {
 
 
     public static void main(String[] args) {
-        int[] weights = { 60, 50, 60, 50, 70, 70, 45};
-        int[] benefits = {180, 95, 40, 95, 40, 40, 105};
+        int[] weights = { -1, 60, 50, 60, 50, 70, 70, 45};
+        int[] benefits = {-1, 180, 95, 40, 95, 40, 40, 105};
         Knapsack knap = new Knapsack();
-        knap.GreedyApproximateSolution(weights.length, weights,benefits,20);
+        knap.GreedyApproximateSolution(weights.length -1, weights,benefits,100);
     }
 }
