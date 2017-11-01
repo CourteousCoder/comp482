@@ -10,9 +10,6 @@ public class KnapsackDriver {
         int[] values = {-1, 180, 95, 40, 95, 40, 40, 105};
 
 
-        // Print input values as required in Project 2
-        (new Knapsack(W,weights, values)).print();
-
         System.out.println("\nBrute Force Solution");
         Knapsack kp1 = new Knapsack(W, weights, values);
         kp1.BruteForceSolution();

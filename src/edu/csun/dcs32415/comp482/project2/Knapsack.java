@@ -45,6 +45,8 @@ public class Knapsack {
         for (int i = 1; i < weights.length; i++) {
             items.add(new Item(i, weights[i], benefits[i]));
         }
+
+        print();
     }
 
     /**
@@ -72,20 +74,20 @@ public class Knapsack {
     }
 
     public void BruteForceSolution() {
-        Outputter outputter;
+        SolutionOutputter solutionOutputter;
         // Using a set of sets avoids duplicates such as { {1,4}, {4,1} }
         Set<SortedSet<Item>> uniqueSolutions = new HashSet<>();
         int largestBenefit = 0;
         long pow2n = (int)Math.floor(Math.pow(2,n));
         for (int k = 0; k < pow2n; k++) {
             itemizeSubset(generateSubset(k,n));
-            outputter = new Outputter(contents);
+            solutionOutputter = new SolutionOutputter(contents);
 
             // If this solution is feasible.
-            int currentWeight = outputter.sum(outputter.getWeights());
+            int currentWeight = solutionOutputter.sum(solutionOutputter.getWeights());
             if(currentWeight <= capacity) {
                 // If this solution is more optimal than the others checked so far.
-                int currentBenefit = outputter.sum(outputter.getBenefits());
+                int currentBenefit = solutionOutputter.sum(solutionOutputter.getBenefits());
                 if (currentBenefit > largestBenefit) {
                     // Empty our knapsack because the solutions so far are not optimal.
                     uniqueSolutions.clear();
@@ -105,8 +107,8 @@ public class Knapsack {
 
         // Output the results.
         for (SortedSet<Item> solution : uniqueSolutions) {
-            outputter = new Outputter(solution);
-            outputter.print();
+            solutionOutputter = new SolutionOutputter(solution);
+            solutionOutputter.print();
         }
 
     }
@@ -134,8 +136,8 @@ public class Knapsack {
             }
         }
 
-        Outputter outputter = new Outputter(contents);
-        outputter.print();
+        SolutionOutputter solutionOutputter = new SolutionOutputter(contents);
+        solutionOutputter.print();
     }
 
     /**
@@ -170,9 +172,9 @@ public class Knapsack {
      * Print the knapsack instance.
      */
     public void print() {
-        Outputter outputter = new Outputter(this.items);
-        List<Integer> weights = outputter.getWeights();
-        List<Integer> benefits = outputter.getBenefits();
+        SolutionOutputter solutionOutputter = new SolutionOutputter(this.items);
+        List<Integer> weights = solutionOutputter.getWeights();
+        List<Integer> benefits = solutionOutputter.getBenefits();
 
         // Put back the -1 into index 0.
         weights.add(0,new Integer(-1));
@@ -236,14 +238,14 @@ public class Knapsack {
     }
 
     /**
-     * Helper class for outputting items in a set.
+     * Helper class for outputting collections and item sets.
      */
-    private class Outputter {
+    private class SolutionOutputter {
         private List<Integer> names;
         private List<Integer> weights;
         private List<Integer> benefits;
 
-        public Outputter(Set<Item> itemSet) {
+        public SolutionOutputter(Set<Item> itemSet) {
             names = new ArrayList<>();
             weights = new ArrayList<>();
             benefits = new ArrayList<>();
@@ -279,7 +281,24 @@ public class Knapsack {
             return result;
         }
 
-
+        public void printMatrix(int[][] matrix, int spacing, boolean withLabels) {
+            if (withLabels) {
+                System.out.printf(String.format("%%%ds",spacing), "B[k,w]");
+                for (int j=1; j <= matrix[0].length; j++) {
+                    System.out.printf(String.format("%%%ds",spacing), j);
+                }
+                System.out.println();
+            }
+            for(int i=0; i<matrix.length; i++){
+                if (withLabels) {
+                    System.out.printf(String.format("%%%ds",spacing), i+1);
+                }
+                for(int j=0; j<matrix[i].length; j++){
+                    System.out.printf(String.format("%%%ds",spacing), matrix[i][j]);
+                }
+                System.out.println();
+            }
+        }
 
         /**
          * Prints the given set of items, the sum of the weights and the sum of the benefits.
