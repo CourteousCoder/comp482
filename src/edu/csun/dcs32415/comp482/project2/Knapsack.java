@@ -1,16 +1,50 @@
 package edu.csun.dcs32415.comp482.project2;
 
+
 import java.util.*;
 
 public class Knapsack {
     private int capacity;
-    private int size;
-    private List<Item> items;
+    private int n;
+    private SortedSet<Item> items;
+    // A collection of items are being put into the knapsack
+    private SortedSet<Item> contents;
+    // A collection of items that are NOT being put into the knapsack
+    private SortedSet<Item> trash;
 
-    public Knapsack() {
-        size = -1;
-        capacity = 0;
-        items = new ArrayList<Item>();
+    // Describes an ordering of items by their name.
+    private Comparator<Item> byName;
+    // Describes an ordering of items by ratio of benefit/weight
+    private Comparator<Item> byRatio;
+
+
+    public Knapsack(int weightCapacity, int[] weights, int[] benefits) {
+        n = weights.length-1;
+        capacity = weightCapacity;
+
+        // Define an ordering of items by name.
+        byName = Comparator.comparing(item -> item.name);
+        // Define an ordering  of items, first by ratio, then by name (if ratios are the same).
+        byRatio = (Item a, Item b) -> {
+            Double ratioA = a.ratio;
+            Double ratioB = b.ratio;
+            int ratioComparison = ratioA.compareTo(ratioB);
+            if (ratioComparison != 0) {
+                return ratioComparison;
+            } else {
+                Integer nameA = a.name;
+                Integer nameB = b.name;
+                return nameA.compareTo(nameB);
+            }
+        };
+
+        items = new TreeSet<>(byName);
+        contents = null;
+        trash = null;
+        // Fill the set of available items using the given weights and benefits. Ignore the -1 element at index 0.
+        for (int i = 1; i < weights.length; i++) {
+            items.add(new Item(i, weights[i], benefits[i]));
+        }
     }
 
     /**
@@ -37,161 +71,67 @@ public class Knapsack {
         return result;
     }
 
-    public void BruteForceSolution(int size, int[] weights, int[] benefits, int capacity) {
-        setItems(size, weights, benefits, capacity);
+    public void BruteForceSolution() {
+        reset();
     }
 
-    public void GreedyApproximateSolution(int size, int[] weights, int[] benefits, int capacity) {
-        setItems(size, weights, benefits, capacity);
-        sortByRatio();
-        int i = 0;
-        int sum = 0;
-        boolean isFull = false;
-        while (i < items.size() && !isFull){
-            if(sum + items.get(i).weight <= capacity) {
-                items.get(i).use();
-                sum += items.get(i).weight;
-            } else {
-                isFull = true;
+    public void GreedyApproximateSolution() {
+        reset();
+        contents = new TreeSet<>(byName);
+
+        // Let the trash sort the items by ratio in ascending order.
+        trash = new TreeSet<>(byRatio);
+        trash.addAll(items);
+        items.clear();
+
+        // Take items out of the trash, and put them into the knapsack until it's full or until we take all items.
+        int spaceRemaining = capacity;
+        while(!trash.isEmpty() && spaceRemaining > 0) {
+            // Take the item with the highest ratio.
+            Item currentItem = trash.last();
+            spaceRemaining -= currentItem.weight;
+            // If it fits.
+            if(spaceRemaining > 0) {
+                // Take the item from the trash.
+                trash.remove(currentItem);
+                contents.add(currentItem);
             }
-            i++;
         }
-        restoreOriginalOrder();
-        System.out.println(this);
-        printSet();
-    }
 
-    private int[] getWeights() {
-        int[] weights = new int[items.size()];
-        for (int i = 0; i < items.size(); i++) {
-            weights[i] = items.get(i).weight;
-        }
-        return weights;
-    }
-
-    private int[] getBenefits() {
-        int[] benefits = new int[items.size()];
-        for (int i = 0; i < items.size(); i++) {
-            benefits[i] = items.get(i).benefit;
-        }
-        return benefits;
+        Outputter outputter = new Outputter(contents);
+        outputter.print();
     }
 
     /**
-     * Gets the contents of the knapsack in name order; i.e., the items used.
-     * @return
+     * Print the knapsack instance.
      */
-    private int[] getContents() {
-        int[] contents;
-        // Make a collection of items that currently in the knapsack ordered by name.
-        SortedSet<Integer> usedItemNames = new TreeSet<Integer>(Comparator.comparing(integer -> integer.intValue()));
-        for (Item i : items) {
-            if (i.isUsed()) {
-                usedItemNames.add(Integer.valueOf(i.name));
-            }
-        }
+    public void print() {
+        Outputter outputter = new Outputter(this.items);
+        List<Integer> weights = outputter.getWeights();
+        List<Integer> benefits = outputter.getBenefits();
 
-        // Convert them into an array primitive ints.
-        contents = new int[usedItemNames.size()];
-        int i = 0;
-        for (Integer name : usedItemNames) {
-            contents[i] = name.intValue();
-            i++;
-        }
-        return contents;
-    }
+        // Put back the -1 into index 0.
+        weights.add(0,new Integer(-1));
+        benefits.add(0,new Integer(-1));
 
-    private int weightSum() {
-        int sum = 0;
-        for (Item i : items) {
-            if (i.isUsed()) {
-                sum+=i.weight;
-            }
-        }
-        return sum;
-    }
-
-    private int benefitSum() {
-        int sum = 0;
-        for (Item i : items) {
-            if (i.isUsed()) {
-                sum+=i.benefit;
-            }
-        }
-        return sum;
-    }
-
-    private void setItems(int size, int[] weights, int[] benefits, int capacity) {
-        this.capacity = capacity;
-        this.size = size;
-        this.items.clear();
-        for (int i = 0; i < weights.length; i++) {
-            this.items.add(new Item(i, weights[i], benefits[i]));
-        }
-    }
-
-    /**
-     * Makes a string from an array of integers like this: "[1,4,2,4,6,8]".
-     * @param data
-     * @return A pretty string representation of data.
-     */
-    private static String beautifyArray(int[] data) {
-        // Initialize a string builder at the smallest size required to display 1-digit integers, commas, and brackets.
-        StringBuilder builder = new StringBuilder(2 * data.length + 1);
-        builder = builder.append('[');
-        for (int element : data) {
-            builder = builder.append(element).append(',');
-        }
-
-        // Remove trailing comma.
-        int lastCharIndex = builder.length() - 1;
-        if (builder.charAt(lastCharIndex) == ',') {
-            builder = builder.deleteCharAt(lastCharIndex);
-        }
-
-        builder = builder.append(']');
-        return builder.toString();
-    }
-
-    /**
-     * Prints the set of items currently used in the knapsack, the sum of the weights and the sum of the benefits.
-     */
-    private void printSet() {
-        StringBuilder builder = new StringBuilder(beautifyArray(getContents()));
-        //Change brackets to curly braces
-        builder = builder.replace(0,1,"{ ").replace(builder.length()-1,builder.length()," }");
-        System.out.printf("Optimal set= %s weight sum = %d benefit sum = %d", builder.toString(), weightSum(), benefitSum());
-    }
-
-    @Override
-    public String toString() {
-        int[] weights = getWeights();
-        int[] benefits = getBenefits();
         StringBuilder builder = new StringBuilder("Knapsack Problem Instance");
-        builder = builder.append("\nNumber of items = ").append(this.size);
+        builder = builder.append("\nNumber of items = ").append(this.n);
         builder = builder.append("  Knapsack Capacity = ").append(this.capacity);
-        builder = builder.append("\nInput weights:  ").append(beautifyArray(weights));
-        builder = builder.append("\nInput benefits: ").append(beautifyArray(benefits));
-        return builder.toString();
-    }
+        builder = builder.append("\nInput weights:  ").append(weights);
+        builder = builder.append("\nInput benefits: ").append(benefits);
 
-    private void restoreOriginalOrder() {
-        items.sort(Comparator.comparing( i -> i.name));
-    }
-
-    private void sortByRatio() {
-
-        items.sort(Comparator.comparing( i -> i.ratio));
-
-        // Descending order.
-        Collections.reverse(items);
+        System.out.println(builder.toString());
     }
 
     private void reset() {
-        for (Item i : items) {
-            i.clearUsed();
+        if (trash != null) {
+            items.addAll(trash);
+            trash = null;
         }
-        restoreOriginalOrder();
+        if (contents != null) {
+            items.addAll(contents);
+            contents = null;
+        }
     }
 
     private class Item {
@@ -199,33 +139,92 @@ public class Knapsack {
         public final int weight;
         public final int benefit;
         public double ratio;
-        private boolean isUsed;
+        private int hashCode;
 
         public Item(int name, int weight, int benefit) {
             this.name = name;
             this.weight = weight;
             this.benefit = benefit;
-            this.ratio = name == 0 ? 0 : benefit / (double) weight;
-            this.isUsed = false;
+            this.ratio =  benefit / (double) weight;
+
+            //Cache the hashcode because Items are immutable.
+            int primeNumber = 251;
+            hashCode = name;
+            hashCode += (benefit * primeNumber);
+            hashCode += (weight  * primeNumber);
         }
 
-        public boolean isUsed() {
-            return isUsed;
+        @Override
+        public boolean equals(Object o) {
+            Item other = (Item) o;
+            return other.name == name && other.weight == weight && other.benefit == benefit;
         }
 
-        public void use() {
-            if (name != 0) {
-                isUsed = true;
-            }
-        }
-
-        public void clearUsed() {
-            isUsed = false;
+        @Override
+        public int hashCode() {
+            return this.hashCode;
         }
 
         @Override
         public String toString() {
-            return String.format("(#%d,w%d,b%d)",name,weight,benefit);
+            return String.format("(#%d,w:%d,b:%d,r:%2.3f)",name,weight,benefit,ratio);
+        }
+    }
+
+    /**
+     * Helper class for outputting items in a set.
+     */
+    private class Outputter {
+        private List<Integer> names;
+        private List<Integer> weights;
+        private List<Integer> benefits;
+
+        public Outputter(Set<Item> itemSet) {
+            names = new ArrayList<>();
+            weights = new ArrayList<>();
+            benefits = new ArrayList<>();
+            for (Item item : itemSet) {
+                names.add(new Integer(item.name));
+                weights.add(new Integer(item.weight));
+                benefits.add(new Integer(item.benefit));
+            }
+        }
+
+        public List<Integer> getNames() {
+            return names;
+        }
+
+        public List<Integer> getWeights() {
+            return weights;
+        }
+
+        public List<Integer> getBenefits() {
+            return benefits;
+        }
+
+        /**
+         * Sum a list of integers.
+         * @param list
+         * @return
+         */
+        public int sum(List<Integer> list) {
+            int result = 0;
+            for (Integer integer : list) {
+                result += integer.intValue();
+            }
+            return result;
+        }
+
+
+
+        /**
+         * Prints the given set of items, the sum of the weights and the sum of the benefits.
+         */
+        public void print() {
+            StringBuilder builder = new StringBuilder(names.toString());
+            //Change brackets to curly braces
+            builder = builder.replace(0,1,"{ ").replace(builder.length()-1,builder.length()," }");
+            System.out.printf("Optimal set = %s weight sum = %d benefit sum = %d", builder.toString(), sum(weights), sum(benefits));
         }
     }
 }
