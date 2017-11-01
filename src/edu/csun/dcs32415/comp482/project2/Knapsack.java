@@ -72,7 +72,43 @@ public class Knapsack {
     }
 
     public void BruteForceSolution() {
-        reset();
+        Outputter outputter;
+        // Using a set of sets avoids duplicates such as { {1,4}, {4,1} }
+        Set<SortedSet<Item>> uniqueSolutions = new HashSet<>();
+        int largestBenefit = 0;
+        long pow2n = (int)Math.floor(Math.pow(2,n));
+        for (int k = 0; k < pow2n; k++) {
+            itemizeSubset(generateSubset(k,n));
+            outputter = new Outputter(contents);
+
+            // If this solution is feasible.
+            int currentWeight = outputter.sum(outputter.getWeights());
+            if(currentWeight <= capacity) {
+                // If this solution is more optimal than the others checked so far.
+                int currentBenefit = outputter.sum(outputter.getBenefits());
+                if (currentBenefit > largestBenefit) {
+                    // Empty our knapsack because the solutions so far are not optimal.
+                    uniqueSolutions.clear();
+                }
+                // If this solution is at least as good as the ones checked so far.
+                if (currentBenefit >= largestBenefit) {
+                    // Then so far, we can say it's optimal.
+                    SortedSet<Item> solution = new TreeSet<>(byName);
+                    solution.addAll(contents);
+                    // Add this solution into our set of solutions.
+                    uniqueSolutions.add(solution);
+                    // Update our definition of optimal.
+                    largestBenefit = currentBenefit;
+                }
+            }
+        }
+
+        // Output the results.
+        for (SortedSet<Item> solution : uniqueSolutions) {
+            outputter = new Outputter(solution);
+            outputter.print();
+        }
+
     }
 
     public void GreedyApproximateSolution() {
@@ -100,6 +136,34 @@ public class Knapsack {
 
         Outputter outputter = new Outputter(contents);
         outputter.print();
+    }
+
+    /**
+     * Transforms a bitmap into a two sets of items.
+     * Stores the 1's as their corresponding items into this.contents
+     * Stores the 0's as their corresponding items into this.trash
+     * @param subset A bitmap as an integer array that defines the subset.
+     */
+    private void itemizeSubset(int[] subset) {
+        reset();
+        contents = new TreeSet<>(byName);
+        trash = new TreeSet<>(byName);
+
+        // This works because the items are in name-order and because items.size() == subset.length
+        for (int i=0; !items.isEmpty(); i++) {
+            // Get the i'th (the next) item.
+            Item currentItem = items.first();
+            // If the i'th item is in the subset.
+            if (subset[i] == 1) {
+                // Add it to the knapsack.
+                contents.add(currentItem);
+            } else {
+                // Throw it in the trash.
+                trash.add(currentItem);
+            }
+            // Remove the current item from the set of items that are to be considered.
+            items.remove(currentItem);
+        }
     }
 
     /**
@@ -224,7 +288,7 @@ public class Knapsack {
             StringBuilder builder = new StringBuilder(names.toString());
             //Change brackets to curly braces
             builder = builder.replace(0,1,"{ ").replace(builder.length()-1,builder.length()," }");
-            System.out.printf("Optimal set = %s weight sum = %d benefit sum = %d", builder.toString(), sum(weights), sum(benefits));
+            System.out.printf("Optimal set = %s weight sum = %d benefit sum = %d%n", builder.toString(), sum(weights), sum(benefits));
         }
     }
 }

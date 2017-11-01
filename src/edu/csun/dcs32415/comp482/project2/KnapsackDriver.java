@@ -15,7 +15,7 @@ public class KnapsackDriver {
 
         System.out.println("\nBrute Force Solution");
         Knapsack kp1 = new Knapsack(W, weights, values);
-//        kp1.BruteForceSolution();
+        kp1.BruteForceSolution();
 
 
         System.out.println("\nDynamic Programming Solution");
