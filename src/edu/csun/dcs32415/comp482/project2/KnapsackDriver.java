@@ -17,7 +17,7 @@ public class KnapsackDriver {
 
         System.out.println("\nDynamic Programming Solution");
         Knapsack kp3 = new Knapsack(W, weights, values);
-       // kp3.DynamicProgrammingSolution(false);
+        kp3.DynamicProgrammingSolution(true);
 
 
         System.out.println("\nGreedy Approximate Solution");

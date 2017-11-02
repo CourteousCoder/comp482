@@ -17,7 +17,6 @@ public class Knapsack {
     // Describes an ordering of items by ratio of benefit/weight
     private Comparator<Item> byRatio;
 
-
     public Knapsack(int weightCapacity, int[] weights, int[] benefits) {
         n = weights.length-1;
         capacity = weightCapacity;
@@ -78,7 +77,7 @@ public class Knapsack {
         // Using a set of sets avoids duplicates such as { {1,4}, {4,1} }
         Set<SortedSet<Item>> uniqueSolutions = new HashSet<>();
         int largestBenefit = 0;
-        long pow2n = (int)Math.floor(Math.pow(2,n));
+        int pow2n = (int)Math.floor(Math.pow(2,n));
         for (int k = 0; k < pow2n; k++) {
             itemizeSubset(generateSubset(k,n));
             solutionOutputter = new SolutionOutputter(contents);
@@ -111,6 +110,46 @@ public class Knapsack {
             solutionOutputter.print();
         }
 
+    }
+
+    public void DynamicProgrammingSolution(boolean printBmatrix) {
+        reset();
+        // Trash will hold all the items as we consider them.
+        trash = new TreeSet<>(byName);
+        int[][] B = new int[n+1][capacity+1];
+
+        // Java Initializes the base cases automatically.
+
+        // Fill in the matrix.
+        for (int k = 1; k <= n; k++) {
+            Item currentItem = items.first();
+            for (int w = 1; w <= capacity; w++) {
+                // If the item is too heavy
+                if(currentItem.weight > w) {
+                    // Then the most optimal solution with this capacity is the the one that doesn't use this item.
+                    B[k][w] = B[k-1][w];
+                }
+                else {
+                    // Using this item would be the same benefit as not using this item, subtracting the weight from w..
+                    int benefitUsingItem = currentItem.benefit + B[k-1][w-currentItem.weight];
+                    // Or it might be better not to use this item.
+                    int benefitNotUsingItem = B[k-1][w];
+                    // The most optimal solution is the one that gives the greater benefit.
+                    B[k][w] = Math.max(benefitUsingItem, benefitNotUsingItem);
+                }
+            }
+            trash.add(currentItem);
+            items.remove(currentItem);
+        }
+        setContentsFromMatrix(B);
+        SolutionOutputter solutionOutputter = new SolutionOutputter(contents);
+        solutionOutputter.print();
+        if (printBmatrix) {
+            solutionOutputter.printMatrix(B,8,true);
+        }
+        else {
+            System.out.println("Matrix is too big to print.");
+        }
     }
 
     public void GreedyApproximateSolution() {
@@ -151,8 +190,8 @@ public class Knapsack {
         contents = new TreeSet<>(byName);
         trash = new TreeSet<>(byName);
 
-        // This works because the items are in name-order and because items.size() == subset.length
-        for (int i=0; !items.isEmpty(); i++) {
+        // This works because the items are in name-order and because items.size() == subset.length == n
+        for (int i=0; i < n; i++) {
             // Get the i'th (the next) item.
             Item currentItem = items.first();
             // If the i'th item is in the subset.
@@ -167,6 +206,37 @@ public class Knapsack {
             items.remove(currentItem);
         }
     }
+
+    /**
+     * Sets this.content to be the optimal set of items the dynamic programming B matrix. The rest go in the trash.
+     * @param B The matrix set by the dynamic programming function.
+     */
+    private void setContentsFromMatrix(int[][] B) {
+        reset();
+        contents = new TreeSet<>(byName);
+        trash = new TreeSet<>(byName);
+        // Go backwards, item by item.
+        int k = n;
+        int w = capacity;
+        while(!items.isEmpty()) {
+            Item currentItem = items.last();
+            // Follow back down the trail of improving benefits.
+            //If the benefit did not increase using this item.
+            if (B[k][w] == B[k-1][w]) {
+                // Then throw this item in the trash.
+                trash.add(currentItem);
+            }
+            else {
+                // This item is needed for the optimal solution.
+                contents.add(currentItem);
+                //Jump horizontally to the next part of the table.
+                w -= currentItem.weight;
+            }
+            items.remove(currentItem);
+            k--;
+        }
+    }
+
 
     /**
      * Print the knapsack instance.
@@ -284,14 +354,14 @@ public class Knapsack {
         public void printMatrix(int[][] matrix, int spacing, boolean withLabels) {
             if (withLabels) {
                 System.out.printf(String.format("%%%ds",spacing), "B[k,w]");
-                for (int j=1; j <= matrix[0].length; j++) {
+                for (int j=0; j < matrix[0].length; j++) {
                     System.out.printf(String.format("%%%ds",spacing), j);
                 }
                 System.out.println();
             }
             for(int i=0; i<matrix.length; i++){
                 if (withLabels) {
-                    System.out.printf(String.format("%%%ds",spacing), i+1);
+                    System.out.printf(String.format("%%%ds",spacing), i);
                 }
                 for(int j=0; j<matrix[i].length; j++){
                     System.out.printf(String.format("%%%ds",spacing), matrix[i][j]);
