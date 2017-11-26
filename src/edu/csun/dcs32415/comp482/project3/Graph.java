@@ -1,7 +1,6 @@
 package edu.csun.dcs32415.comp482.project3;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.util.*;
 
 public class Graph { //------------------------------------------------------
@@ -9,8 +8,15 @@ public class Graph { //------------------------------------------------------
     private int nVertices;
     private int nEdges;
 
-    /* Calculated by isStronglyConnected. */
-    private Set<Set<Integer>> stronglyConnectedComponents;
+    // Traditional definition of a graph:
+    private Set<Integer> vertexSet;
+    private Set<EdgeNode> edgeSet;
+
+    /** 
+     * Calculated by isStronglyConnected. 
+     * @var A set of maximal strongly connected components, sorted in descending order by cardinality.
+     */
+    private SortedSet<Set<Integer>> stronglyConnectedComponents;
 
     private String fileName;
     /******************  Constructor**********************/
@@ -20,11 +26,13 @@ public class Graph { //------------------------------------------------------
      */
     public Graph(String inputFileName) {
         try {
-            init(new FileInputStream(inputFileName));
+            init(new Scanner(new File(inputFileName)));
+            fileName = inputFileName;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.out.println("Error reading input file. Now reading from Standard Input...");
-            init(System.in);
+            System.out.println("Error reading input file. Reading from standard input...\n" +
+                    "Please enter the contents of the input file all at once, followed by a blank line: ");
+            init();
         }
     }
 
@@ -32,40 +40,73 @@ public class Graph { //------------------------------------------------------
      * Constructor using Standard Input instead of a file name. Useful for testing.
      */
     private Graph() {
-        init(System.in);
+        init();
     }
 
     /**
      * Private constructor-helper to initialize the graph from any input stream of integers.
      * The program will crash if the input stream is malformed.
-     * @param input The input stream containing the graph in the following format:
+     * @param scanner The scanner of the input stream containing the graph in the following format:
      *              - The first integer should be the number of vertices.
      *              - The remaining integers should represent the edges.
      *              - An edge should be an three consecutive integers: sourceVertexId, destinationVertexId, and weight.
      *              - Vertex IDs should be unique and non-negative, and the highest-numbered ID should be nVertices - 1.
      */
-    private void init(InputStream input) {
-        Scanner scanner = new Scanner(input);
-        nVertices = scanner.nextInt();
-        nEdges = 0;
+    private void init(Scanner scanner) {
+        //Regex for ignoring characters that do not make signed integers.
+        // This is just for skipping over comments. If you try something like: "-023++44-1", the scanner will wrongly
+        // consider it an integer.
+        scanner.useDelimiter("[^-+0-9]+");
+
+        // Initialize vertices.
+        nVertices = Integer.parseInt(scanner.next());
         adjList = new ArrayList[nVertices];
+        vertexSet = new HashSet<>();
+        for (int vertex = 0; vertex < nVertices; vertex++) {
+            adjList[vertex] = new ArrayList<>();
+            vertexSet.add(vertex);
+        }
+        // Initialize Edges
+        edgeSet = new HashSet<>();
         int[] rawEdge = new int[3];
         while(scanner.hasNext()) {
             for (int i = 0; i < rawEdge.length; i++) {
-                rawEdge[i] = scanner.nextInt();
+                rawEdge[i] = Integer.parseInt(scanner.next());
             }
-            adjList[rawEdge[0]].add(new EdgeNode(rawEdge));
-            nEdges++;
+            EdgeNode edge = new EdgeNode(rawEdge);
+            adjList[rawEdge[0]].add(edge);
+            edgeSet.add(edge);
         }
+        nEdges = edgeSet.size();
 
+        // SCCs
         computeStronglyConnectedComponents();
     }
 
+    /**
+     * A private constructor-helper to initialize the graph from Standard Input, terminated by a blank line.
+     */
+    private void init() {
+        Scanner scanner = new Scanner(System.in);
+
+        // Essentially, this takes the entire input as one string
+        scanner.useDelimiter("\n\n");
+        String input = scanner.next();
+
+        // Reset the scanner now point to the input which we just read.
+        scanner = new Scanner(input);
+
+        //Parse the input.
+        init(scanner);
+    }
+
     /******************Print graph method***************/
-    public void printGraph() {}
+    public void printGraph() {
+        System.out.println(this);
+    }
     /******************* BFS Shortest paths  ******************/
     public SPPacket bfsShortestPaths(int start) {
-        return null;
+
     }
     /********************Dijkstra's Shortest Path Algorithm*** */
     public SPPacket dijkstraShortestPaths(int start) {
@@ -77,14 +118,21 @@ public class Graph { //------------------------------------------------------
     }
     /***********************Prints shortest paths*************************/
     public void printShortestPaths(SPPacket spp) {
-        System.out.println(spp.toString());
+        System.out.println(spp);
     }
     /*****************isStronglyConnected***************************/
     public boolean isStronglyConnected() {
         if (stronglyConnectedComponents == null || stronglyConnectedComponents.isEmpty()) {
             computeStronglyConnectedComponents();
         }
-        return stronglyConnectedComponents.size() == 1;
+        // By definition, a strongly connected component C of graph G=(V,E) is a a subset of G in which there exist paths
+        // to all vertices in C from each vertex in C.
+        // Trivially, this implies that if G has N vertices and 0 edges, then there are exactly N unique SCCs in G,
+        // each containing exactly one vertex.
+
+        // We just computed all a set S containing all SCCs of G.
+        // Therefore, we can conclude that G, itself, is an SCC if S contains V.
+        return stronglyConnectedComponents.contains(vertexSet);
     }
 
     /**
@@ -101,10 +149,34 @@ public class Graph { //------------------------------------------------------
         for (int vertex = 0; vertex < nVertices; vertex++) {
             preorderNumber[vertex] = -1;
         }
-        stronglyConnectedComponents = new HashSet<>();
+        // Initialize a set of Strongly connected components sorted by the number of vertices, descending.
+        stronglyConnectedComponents = new TreeSet<>(Comparator.comparingInt(set -> -set.size()));
         for (int vertex = 0; vertex < nVertices; vertex++) {
             doSccSearch(vertex, visitedVertexCount, preorderNumber, unassignedVertices, undistinguishedVertices);
         }
+
+        /* Keep only  maximal SCCs. */
+
+        SortedSet<Set<Integer>> maximalStronglyConnectedComponents = new TreeSet<>(
+                Comparator.comparingInt(set -> -set.size())
+        );
+
+        /*This greedily determines the maximal SCCs because stronglyConnectedComponents is sorted by biggest set first.*/
+
+        Set<Integer> uncheckedVertices = new HashSet<Integer>(vertexSet);
+        Iterator<Set<Integer>> sccIt = stronglyConnectedComponents.iterator();
+
+        // Find the maximal SCCs containing each vertex.
+        while(!uncheckedVertices.isEmpty()) {
+            // Get the next largest SCC.
+            Set<Integer> scc = sccIt.next();
+            // Mark all vertices in this Maximal SCC as checked.
+            uncheckedVertices.removeAll(scc);
+            // Move the SCC from our set of SCCs to our set of **maximal** SCCs.
+            sccIt.remove();
+            maximalStronglyConnectedComponents.add(scc);
+        }
+        stronglyConnectedComponents = maximalStronglyConnectedComponents;
     }
 
     /**
@@ -123,7 +195,7 @@ public class Graph { //------------------------------------------------------
                 doSccSearch(edge.toVertex, visitedVertexCount, preorderNumber,
                         unassignedVertices, undistinguishedVertices);
             // Else, if that vertex has not been assigned to an SCC yet.
-            } else if (unassignedVertices.contains(edge.toVertex)) {
+            } else if (undistinguishedVertices.contains(edge.toVertex)) {
                 //Repeatedly pop vertices until the top element of the stack has a
                 // preorder number less than or equal to the preorder number of the vertex opposite this edge..
                 while (preorderNumber[undistinguishedVertices.peek()] > preorderNumber[edge.toVertex]) {
@@ -152,6 +224,59 @@ public class Graph { //------------------------------------------------------
     protected Set<Set<Integer>> getStronglyConnectedComponents() {
         return stronglyConnectedComponents;
     }
+
+    /**
+     * Accessor for getting the numbner of vertices.
+     * @return
+     */
+    protected int countVertices() {
+        return nVertices;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("Graph:");
+        builder = builder.append(" nVertices = ")
+                .append(nVertices)
+                .append(" nEdges = ")
+                .append(nEdges)
+                .append("\nAdjacency Lists");
+        for (int vertex = 0; vertex < nVertices; vertex++) {
+            builder = builder.append("\nv= ")
+                    .append(vertex)
+                    .append("\t")
+                    .append(adjList[vertex]);
+        }
+        return builder.toString();
+    }
+
+
+    /************Main Program*******************************/
+    public static void main(String[] args) {
+        Graph g;
+        if (args.length == 1) {
+            g = new Graph(args[0]);
+        }
+        else {
+            System.out.println("Please type in the graph specification, all at once:");
+            g = new Graph();
+        }
+        g.printGraph();
+        System.out.printf("Is strongly connected: %s.%n", g.isStronglyConnected());
+        System.out.println("Strongly Connected components:");
+        System.out.println(g.getStronglyConnectedComponents());
+        for (int i = 0; i < g.countVertices(); i++) {
+            System.out.println("BFS: ");
+            g.printShortestPaths(g.bfsShortestPaths(i));
+            System.out.println("Dijkstra: ");
+            g.printShortestPaths(g.dijkstraShortestPaths(i));
+            System.out.println("Bellman Ford: ");
+            g.printShortestPaths(g.bellmanFordShortestPaths(i));
+            System.out.println("-----------------------------------");
+        }
+
+
+    }
 } //end Graph class
 //place the EdgeNode class and the SPPacket class inside the Graph.java file
 /*******************************************/
@@ -167,8 +292,21 @@ class EdgeNode {
     public EdgeNode(int[] orderedTriple) {
         this(orderedTriple[0], orderedTriple[1], orderedTriple[2]);
     }
+
+    @Override
     public String toString() {
         return String.format("(%d,%d,%d)", fromVertex, toVertex, weight);
+    }
+
+    @Override
+    public int hashCode() {
+        return fromVertex ^ toVertex ^ weight;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        EdgeNode e = (EdgeNode) o;
+        return fromVertex == e.fromVertex && toVertex == e.toVertex && weight == e.weight;
     }
 }
 /***********************************************/
@@ -189,19 +327,24 @@ class SPPacket {
     public int[] getDistance() {
         return d;
     }
+
     public int[] getParent() {
         return parent;
     }
+
     public int getSource() {
         return source;
     }
+
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(String.format("Shortest Paths from vertex %d to vertex",source));
+        // For each destination.
         for (int destination = 0; destination < paths.length; destination++) {
             builder = builder.append("\n")
                     .append(destination)
                     .append(":\t")
-                    .append(paths[destination].toString())
+                    .append(paths[destination])
                     .append("\t Path weight = ")
                     .append(d[destination]);
         }
@@ -216,6 +359,7 @@ class SPPacket {
     private ArrayList<Integer> getPathTo(int destination) {
         if (paths[destination] == null) {
             ArrayList<Integer> path = new ArrayList<>();
+            // If there is a parent in the path to this destination.
             if (parent[destination] >= 0) {
                 path.add(destination);
                 path.addAll(getPathTo(parent[destination]));
