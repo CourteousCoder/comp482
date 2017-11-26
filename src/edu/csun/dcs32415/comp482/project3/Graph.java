@@ -9,6 +9,7 @@ public class Graph { //------------------------------------------------------
     private int nVertices;
     private int nEdges;
 
+
     // Traditional definition of a graph:
     private Set<Integer> vertexSet;
     private Set<EdgeNode> edgeSet;
@@ -20,6 +21,8 @@ public class Graph { //------------------------------------------------------
     private SortedSet<Set<Integer>> stronglyConnectedComponents;
 
     private String fileName;
+    public static final int INFINITY = Integer.MAX_VALUE;
+
     /******************  Constructor**********************/
     /**
      * Construct the graph by specification from a file whose name is contained in the given string, inputFileName.
@@ -114,7 +117,7 @@ public class Graph { //------------------------------------------------------
         int[] parent = new int[nVertices];
         for (int i = 0; i < nVertices; i++) {
             exploredVertex[i] = false;
-            dist[i] = Integer.MAX_VALUE;
+            dist[i] = INFINITY;
             parent[i] = -1;
         }
         // Explore the start vertex.
@@ -140,9 +143,57 @@ public class Graph { //------------------------------------------------------
         }
         return new SPPacket(start, dist, parent);
     }
+    private void relaxEdge(EdgeNode edge, int[] dist, int[] parent) {
+        // The cost of the path to edge.toVertex using this edge, treating infinity mathematically correctly.
+        int edgeCost = dist[edge.fromVertex] == INFINITY ? INFINITY : dist[edge.fromVertex] + edge.weight;
+        if (edgeCost < dist[edge.toVertex]) {
+            parent[edge.toVertex] = edge.fromVertex;
+            dist[edge.toVertex] = edgeCost;
+        }
+    }
     /********************Dijkstra's Shortest Path Algorithm*** */
     public SPPacket dijkstraShortestPaths(int start) {
-        return null;
+        // Detect negative weights.
+        for (EdgeNode edge : edgeSet) {
+            if (edge.weight < 0) {
+                return null;
+            }
+        }
+
+        //No negative weights. Do Dijkstra's SPA.
+
+        // Initialization.
+        Set<Integer> unexploredVertices = new HashSet<>(vertexSet);
+        int[] dist = new int[nVertices];
+        int[] parent = new int[nVertices];
+        for (int i = 0; i < nVertices; i++) {
+            dist[i] = INFINITY;
+            parent[i] = -1;
+        }
+        dist[start] = 0;
+
+        // While we still have some vertices left to explore.
+        while(!unexploredVertices.isEmpty()) {
+            // Greedily choose the nearest vertex.
+            int nearestVertex = -1;
+            int proximity = INFINITY;
+            for (Integer unexploredVertex : unexploredVertices) {
+                if (dist[unexploredVertex] <= proximity) {
+                    proximity = dist[unexploredVertex];
+                    nearestVertex = unexploredVertex;
+                }
+            }
+            // Explore the nearest vertex.
+            unexploredVertices.remove(nearestVertex);
+            // Check all its outgoing edges.
+            for (EdgeNode edge : adjList[nearestVertex]) {
+                // If a neighbor is unexplored, relax the edge.
+                if (unexploredVertices.contains(edge.toVertex)) {
+                    relaxEdge(edge, dist, parent);
+                }
+            }
+        }
+        return new SPPacket(start, dist, parent);
     }
     /********************Bellman Ford Shortest Paths ***************/
     public SPPacket bellmanFordShortestPaths(int start) {
@@ -378,8 +429,8 @@ class SPPacket {
                     .append(":\t")
                     .append(paths[destination])
                     .append("\t\t Path weight = ")
-                    // Treat the unrealistically large Integer.MAX_VALUE as Infinity.
-                    .append(d[destination] == Integer.MAX_VALUE ? "Infinity" : d[destination]);
+                    // Treat the unrealistically large INFINITY as Infinity.
+                    .append(d[destination] == Graph.INFINITY ? "Infinity" : d[destination]);
         }
         return builder.toString();
     }
@@ -392,12 +443,15 @@ class SPPacket {
     private ArrayList<Integer> getPathTo(int destination) {
         if (paths[destination] == null) {
             ArrayList<Integer> path = new ArrayList<>();
-            // If there is a parent in the path to this destination.
-            if (parent[destination] >= 0) {
-                path.add(destination);
-                path.addAll(getPathTo(parent[destination]));
-                paths[destination] = path;
+            if (source == destination) {
+                path.add(source);
             }
+            // If there is a parent in the path to this destination.
+           else if (parent[destination] >= 0) {
+                path.addAll(getPathTo(parent[destination]));
+                path.add(destination);
+            }
+
             paths[destination] = path;
         }
         return paths[destination];
