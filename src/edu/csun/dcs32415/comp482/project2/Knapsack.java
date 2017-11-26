@@ -9,13 +9,16 @@ public class Knapsack {
     private SortedSet<Item> items;
     // A collection of items are being put into the knapsack
     private SortedSet<Item> contents;
-    // A collection of items that are NOT being put into the knapsack
+    // A collection of items that are NOT being put into the knapsack, unless it is being used as temporary storage.
     private SortedSet<Item> trash;
 
     // Describes an ordering of items by their name.
     private Comparator<Item> byName;
     // Describes an ordering of items by ratio of benefit/weight
     private Comparator<Item> byRatio;
+
+    private int optimalBenefit;
+    private int approximateBenefit;
 
     public Knapsack(int weightCapacity, int[] weights, int[] benefits) {
         n = weights.length-1;
@@ -45,7 +48,7 @@ public class Knapsack {
             items.add(new Item(i, weights[i], benefits[i]));
         }
 
-        print();
+        //print();
     }
 
     /**
@@ -150,6 +153,9 @@ public class Knapsack {
         else {
             System.out.println("Matrix is too big to print.");
         }
+
+        // This line is for the experiments.
+        optimalBenefit = solutionOutputter.sum(solutionOutputter.getBenefits());
     }
 
     public void GreedyApproximateSolution() {
@@ -177,6 +183,8 @@ public class Knapsack {
 
         SolutionOutputter solutionOutputter = new SolutionOutputter(contents);
         solutionOutputter.print();
+        // This line is for the experiments;
+        approximateBenefit = solutionOutputter.sum(solutionOutputter.getBenefits());
     }
 
     /**
@@ -257,6 +265,16 @@ public class Knapsack {
         builder = builder.append("\nInput benefits: ").append(benefits);
 
         System.out.println(builder.toString());
+    }
+
+    public int getOptimalBenefit() {
+        DynamicProgrammingSolution(false);
+        return optimalBenefit;
+    }
+
+    public int getApproximateBenefit() {
+        GreedyApproximateSolution();
+        return approximateBenefit;
     }
 
     private void reset() {
@@ -377,7 +395,7 @@ public class Knapsack {
             StringBuilder builder = new StringBuilder(names.toString());
             //Change brackets to curly braces
             builder = builder.replace(0,1,"{ ").replace(builder.length()-1,builder.length()," }");
-            System.out.printf("Optimal set = %s weight sum = %d benefit sum = %d%n", builder.toString(), sum(weights), sum(benefits));
+            System.out.printf("Optimal set = %s\tweight sum = %d\tbenefit sum = %d%n", builder.toString(), sum(weights), sum(benefits));
         }
     }
 }
