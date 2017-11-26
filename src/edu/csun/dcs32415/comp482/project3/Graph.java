@@ -2,6 +2,7 @@ package edu.csun.dcs32415.comp482.project3;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.logging.Level;
 
 public class Graph { //------------------------------------------------------
     private ArrayList< EdgeNode >[] adjList;
@@ -106,7 +107,38 @@ public class Graph { //------------------------------------------------------
     }
     /******************* BFS Shortest paths  ******************/
     public SPPacket bfsShortestPaths(int start) {
-
+        boolean[] exploredVertex = new boolean[nVertices];
+        Set<EdgeNode> exploredEdges = new HashSet<>(nEdges);
+        List<Set<Integer>> levels = new ArrayList<>(nVertices);
+        int[] dist = new int[nVertices];
+        int[] parent = new int[nVertices];
+        for (int i = 0; i < nVertices; i++) {
+            exploredVertex[i] = false;
+            dist[i] = Integer.MAX_VALUE;
+            parent[i] = -1;
+        }
+        // Explore the start vertex.
+        levels.add(new HashSet<>());
+        levels.get(0).add(start);
+        exploredVertex[start] = true;
+        // Explore the rest.
+        int i = 0;
+        while(!levels.get(i).isEmpty()) {
+            levels.add(new HashSet<>());
+            for (int vertex : levels.get(i)) {
+                dist[vertex] = i;
+                for (EdgeNode edge : adjList[vertex]) {
+                    if (!exploredVertex[edge.toVertex]) {
+                        parent[edge.toVertex] = edge.fromVertex;
+                        levels.get(i + 1).add(edge.toVertex);
+                    }
+                    exploredVertex[edge.toVertex] = true;
+                    exploredEdges.add(edge);
+                }
+            }
+            i++;
+        }
+        return new SPPacket(start, dist, parent);
     }
     /********************Dijkstra's Shortest Path Algorithm*** */
     public SPPacket dijkstraShortestPaths(int start) {
@@ -345,8 +377,9 @@ class SPPacket {
                     .append(destination)
                     .append(":\t")
                     .append(paths[destination])
-                    .append("\t Path weight = ")
-                    .append(d[destination]);
+                    .append("\t\t Path weight = ")
+                    // Treat the unrealistically large Integer.MAX_VALUE as Infinity.
+                    .append(d[destination] == Integer.MAX_VALUE ? "Infinity" : d[destination]);
         }
         return builder.toString();
     }
