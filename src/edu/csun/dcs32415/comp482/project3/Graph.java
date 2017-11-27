@@ -304,7 +304,7 @@ public class Graph { //------------------------------------------------------
         Iterator<Set<Integer>> sccIt = stronglyConnectedComponents.iterator();
 
         // Find the maximal SCCs containing each vertex.
-        while (!uncheckedVertices.isEmpty()) {
+        while (sccIt.hasNext() && !uncheckedVertices.isEmpty()) {
             // Get the next largest SCC.
             Set<Integer> scc = sccIt.next();
             // Mark all vertices in this Maximal SCC as checked.
