@@ -52,7 +52,7 @@ public class Graph { //------------------------------------------------------
         }
         for (String input : inputs) {
             Graph g = new Graph(input);
-            System.out.printf("Input: %s%n");
+            System.out.printf("Input: %s%n", input);
             g.printGraph();
             System.out.printf("Is strongly connected: %s.%n", g.isStronglyConnected());
             System.out.println("Strongly Connected components:");
